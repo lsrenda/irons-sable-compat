@@ -1,12 +1,10 @@
 package com.lucciano.ironssablecompat.mixin;
 
-import com.lucciano.ironssablecompat.helpers.SableUnloadedSubLevelCompat;
-import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import com.lucciano.ironssablecompat.helpers.TransformHelper;
 import io.redspace.ironsspellbooks.entity.spells.portal.PortalEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -32,11 +30,7 @@ public class PortalEntityMixin {
     )
     private void redirectPortalTeleport(Entity instance, double x, double y, double z) {
         Level level = instance.level();
-        if (SubLevelContainer.getContainer(level) == null) {
-            instance.teleportTo(x, y, z);
-            return;
-        }
-        Vec3 resolved = SableUnloadedSubLevelCompat.resolveDestination(level, new Vec3(x, y+0.5, z));
+        var resolved = TransformHelper.AccountForSublevels(level, new Vec3(x, y, z));
         instance.teleportTo(resolved.x, resolved.y, resolved.z);
     }
 
@@ -50,7 +44,6 @@ public class PortalEntityMixin {
     private void fixDimensionTransitionArgs(Args args) {
         ServerLevel level = args.get(0);
         Vec3 dest = args.get(1);
-        Vec3 resolved = SableUnloadedSubLevelCompat.resolveDestination(level, dest);
-        args.set(1, resolved);
+        args.set(1, TransformHelper.AccountForSublevels(level, dest));
     }
 }

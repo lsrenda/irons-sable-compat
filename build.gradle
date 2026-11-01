@@ -40,6 +40,18 @@ repositories {
             includeGroup("dev.ryanhcode.sable-companion")
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        // forRepositories(fg.repository) // Uncomment when using ForgeGradle
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
     maven {
         url = "https://www.cursemaven.com"
     }
@@ -47,7 +59,7 @@ repositories {
 
 dependencies {
 
-    implementation files("libs/sable-neoforge-1.21.1-1.2.2.jar")
+//    implementation files("libs/sable-neoforge-1.21.1-1.2.2.jar")
 
     // Sable Companion - JiJ'd so it ships inside your mod
     jarJar(api("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:[1.6.0,1.6.1)")) {
@@ -55,7 +67,8 @@ dependencies {
     }
 
     // Iron's Spells - implementation so it loads at runtime during dev
-    implementation "curse.maven:irons-spells-n-spellbooks-855414:7907341"
+    implementation "maven.modrinth:irons-spells-n-spellbooks:1.21.1-${project.irons_spellbooks_version}"
+    implementation "maven.modrinth:sable:${project.sable_version}+mc1.21.1"
 }
 
 processResources {

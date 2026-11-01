@@ -1,17 +1,20 @@
 package com.lucciano.ironssablecompat.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.lucciano.ironssablecompat.helpers.TransformHelper;
 import dev.ryanhcode.sable.companion.SableCompanion;
 import dev.ryanhcode.sable.companion.SubLevelAccess;
+import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.util.Utils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
@@ -21,37 +24,14 @@ import net.minecraft.world.entity.LivingEntity;
 @Mixin(value = Utils.class, remap = false)
 public class UtilsMixin {
 
-    @ModifyArgs(method = "handleSpellTeleport", remap = false, at = @At(value = "INVOKE", target = "Lio/redspace/ironsspellbooks/api/events/SpellTeleportEvent;<init>(Lio/redspace/ironsspellbooks/api/spells/AbstractSpell;Lnet/minecraft/world/entity/Entity;DDD)V", remap = false))
-    private static void fixTeleportDestination(Args args) {
-        Entity entity = args.get(1);
-        double x = args.get(2);
-        double y = args.get(3);
-        double z = args.get(4);
-        Vec3 dest = new Vec3(x, y, z);
-
-        System.out.println("[IronsSableCompat] fixTeleportDestination called! dest=" + dest + " entity=" + entity);
-
-        // Case 1: caster is on a ship - project OUT to real world
-        Vec3 realWorldDest = SableCompanion.INSTANCE.projectOutOfSubLevel(entity.level(), dest);
-
-        // Case 2: destination is ON a ship - project INTO it
-        SubLevelAccess subLevel = SableCompanion.INSTANCE.getContaining(entity.level(), realWorldDest);
-        System.out.println("[IronsSableCompat] subLevel=" + subLevel);
-
-        if (subLevel != null) {
-            Vec3 local = subLevel.logicalPose().transformPositionInverse(realWorldDest);
-            System.out.println("[IronsSableCompat] projected into subLevel: " + local);
-            dest = local;
-        } else {
-            dest = realWorldDest;
-        }
-
-        args.set(2, dest.x);
-        args.set(3, dest.y);
-        args.set(4, dest.z);
+    @WrapMethod(method = "handleSpellTeleport")
+    private static boolean fixTeleportDestination(AbstractSpell spell, Entity entity, Vec3 destination, Operation<Boolean> original) {
+        Vec3 globalDest = TransformHelper.AccountForSublevels(entity.level(), destination);
+        return original.call(spell, entity, globalDest);
     }
 
-    private static Vec3 projectLocationToStartSpace(Level level, Vec3 start, Vec3 hitLocation) {
+    @Unique
+    private static Vec3 irons_sable_compat$projectLocationToStartSpace(Level level, Vec3 start, Vec3 hitLocation) {
         SubLevelAccess startSubLevel = SableCompanion.INSTANCE.getContaining(level, start);
         SubLevelAccess hitSubLevel = SableCompanion.INSTANCE.getContaining(level, hitLocation);
 
@@ -60,7 +40,7 @@ public class UtilsMixin {
         }
 
         // First project the hit to real-world coordinates
-        Vec3 realWorldHit = SableCompanion.INSTANCE.projectOutOfSubLevel(level, hitLocation);
+        Vec3 realWorldHit = TransformHelper.AccountForSublevels(level, hitLocation);
 
         if (startSubLevel != null) {
             // Caster/start is in a sub-level, project realWorldHit into the caster's
@@ -72,12 +52,12 @@ public class UtilsMixin {
         }
     }
 
-    @Inject(method = "raycastForBlock", remap = false, at = @At("RETURN"), cancellable = true)
+    @Inject(method = "raycastForBlock(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/ClipContext$Fluid;)Lnet/minecraft/world/phys/BlockHitResult;", remap = false, at = @At("RETURN"), cancellable = true)
     private static void projectRaycastForBlock(Level level, Vec3 start, Vec3 end, ClipContext.Fluid clipContext,
             CallbackInfoReturnable<BlockHitResult> cir) {
         BlockHitResult original = cir.getReturnValue();
         Vec3 hitLocation = original.getLocation();
-        Vec3 adjusted = projectLocationToStartSpace(level, start, hitLocation);
+        Vec3 adjusted = irons_sable_compat$projectLocationToStartSpace(level, start, hitLocation);
 
         if (adjusted != hitLocation) {
             cir.setReturnValue(new BlockHitResult(
@@ -88,7 +68,7 @@ public class UtilsMixin {
         }
     }
 
-    @Inject(method = "getTargetBlock", remap = false, at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getTargetBlock(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/ClipContext$Fluid;D)Lnet/minecraft/world/phys/BlockHitResult;", remap = false, at = @At("RETURN"), cancellable = true)
     private static void projectGetTargetBlock(Level level, LivingEntity entity, ClipContext.Fluid clipContext,
             double reach, CallbackInfoReturnable<BlockHitResult> cir) {
         BlockHitResult original = cir.getReturnValue();
@@ -97,7 +77,7 @@ public class UtilsMixin {
 
         // Check if blockPos lives in a sublevel
         Vec3 blockVec = Vec3.atCenterOf(blockPos);
-        Vec3 projectedBlockVec = SableCompanion.INSTANCE.projectOutOfSubLevel(level, blockVec);
+        Vec3 projectedBlockVec = TransformHelper.AccountForSublevels(level, blockVec);
 
         if (projectedBlockVec.distanceToSqr(blockVec) > 0.01) {
             // BlockPos is in sublevel space — convert Vec3 to the SAME sublevel space

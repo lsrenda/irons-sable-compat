@@ -8,14 +8,14 @@ Fixes all spells exept portal frames, they don't crash but disconnect if the phy
 
 ## Tested Versions
 
-| Mod | Version | Notes |
-|---|---|---|
-| Minecraft | 1.21.1 | |
-| NeoForge | 21.1.172 | |
-| Iron's Spells 'n Spellbooks | **3.15.6** | Hard-pinned — do NOT auto-update |
-| Sable | **1.2.2** | Hard-pinned — do NOT auto-update |
-| Create Aeronautics (bundles Sable) | **1.2.1** | |
-| Sable Companion API | 1.6.0 | Bundled inside this mod (JiJ) |
+| Mod | Version    | Notes |
+|---|------------|---|
+| Minecraft | 1.21.1     | |
+| NeoForge | 21.1.262   | |
+| Iron's Spells 'n Spellbooks | **3.16.3** | Hard-pinned — do NOT auto-update |
+| Sable | **2.0.6**  | Hard-pinned — do NOT auto-update |
+| Create Aeronautics (bundles Sable) | **1.3.2**  | |
+| Sable Companion API | 1.6.0      | Bundled inside this mod (JiJ) |
 
 > **⚠️ Do NOT auto-update Iron's or Sable.** This mod uses Mixins that target
 > specific internal methods. If either mod changes its internals, mixins may
@@ -37,6 +37,7 @@ If either mod updates aggressively:
 ## Disclaimer
 
 - Generated with AI assistance (Claude, Anthropic)
+- Updated by [Gjorgdy](https://modrinth.com/user/Gjorgdy)
 - Not affiliated with iron431 (Iron's Spells) or ryanhcode (Sable)
 - Use at your own risk
 - **This mod will become obsolete once Iron's Spells or Sable ships an official fix**

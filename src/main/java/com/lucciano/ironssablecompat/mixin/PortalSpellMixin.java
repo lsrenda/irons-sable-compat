@@ -1,11 +1,11 @@
 package com.lucciano.ironssablecompat.mixin;
 
+import com.lucciano.ironssablecompat.helpers.TransformHelper;
 import dev.ryanhcode.sable.companion.SableCompanion;
 import dev.ryanhcode.sable.companion.SubLevelAccess;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
 import io.redspace.ironsspellbooks.capabilities.magic.RecastInstance;
-import io.redspace.ironsspellbooks.entity.spells.portal.PortalPos;
 import io.redspace.ironsspellbooks.spells.ender.PortalSpell;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
@@ -21,8 +22,9 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 @Mixin(PortalSpell.class)
 public class PortalSpellMixin {
 
-    private static Vec3 worldToExtreme(Level level, Vec3 pos) {
-        Vec3 projected = SableCompanion.INSTANCE.projectOutOfSubLevel(level, pos);
+    @Unique
+    private static Vec3 irons_sable_compat$worldToExtreme(Level level, Vec3 pos) {
+        Vec3 projected = TransformHelper.AccountForSublevels(level, pos);
         if (projected.distanceToSqr(pos) > 0.01)
             return pos;
 
@@ -45,7 +47,7 @@ public class PortalSpellMixin {
     private void fixSetupPortalEntityArgs(Args args) {
         Level level = args.get(0);
         Vec3 spawnPos = args.get(3);
-        Vec3 dest = worldToExtreme(level, spawnPos);
+        Vec3 dest = irons_sable_compat$worldToExtreme(level, spawnPos);
         args.set(3, dest);
     }
 
@@ -67,7 +69,7 @@ public class PortalSpellMixin {
                                      ServerLevel serverLevel,
                                      BlockHitResult blockHitResult) {
         Vec3 pos = args.get(1);
-        Vec3 dest = worldToExtreme(level, pos);
+        Vec3 dest = irons_sable_compat$worldToExtreme(level, pos);
         args.set(1, dest);
     }
 }

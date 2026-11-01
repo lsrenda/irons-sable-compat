@@ -27,10 +27,10 @@ import org.slf4j.Logger;
 
 import java.io.File;
 
-public final class SableUnloadedSubLevelCompat {
+public final class UnloadedSubLevelHelper {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private SableUnloadedSubLevelCompat() {}
+    private UnloadedSubLevelHelper() {}
 
     public static Vec3 resolveDestination(Level level, Vec3 storagePos) {
         SubLevel loaded = Sable.HELPER.getContaining(level, storagePos);

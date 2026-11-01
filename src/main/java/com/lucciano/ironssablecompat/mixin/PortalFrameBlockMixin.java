@@ -3,7 +3,7 @@ package com.lucciano.ironssablecompat.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.ryanhcode.sable.companion.SableCompanion;
+import com.lucciano.ironssablecompat.helpers.TransformHelper;
 import io.redspace.ironsspellbooks.block.portal_frame.PortalFrameBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -25,14 +25,12 @@ public class PortalFrameBlockMixin {
                                                           @Local(argsOnly = true) BlockPos pos,
                                                           @Local(argsOnly = true) Entity entity) {
         Vec3 entityPos = entity.position();
-        Vec3 projectedEntityPos = SableCompanion.INSTANCE.projectOutOfSubLevel(level, entityPos);
+        Vec3 projectedEntityPos = TransformHelper.AccountForSublevels(level, entityPos);
         boolean entityInSubLevel = projectedEntityPos.distanceToSqr(entityPos) > 0.01;
-
         if (entityInSubLevel) {
             return original.call(shape, x, y, z);
         }
-
-        Vec3 p = SableCompanion.INSTANCE.projectOutOfSubLevel(level, new Vec3(x, y, z));
+        Vec3 p = TransformHelper.AccountForSublevels(level, new Vec3(x, y, z));
         return original.call(shape, p.x, p.y, p.z);
     }
 }

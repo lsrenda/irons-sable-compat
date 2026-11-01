@@ -2,8 +2,7 @@ package com.lucciano.ironssablecompat.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.lucciano.ironssablecompat.helpers.SableUnloadedSubLevelCompat;
-import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import com.lucciano.ironssablecompat.helpers.TransformHelper;
 import io.redspace.ironsspellbooks.block.portal_frame.PortalFrameBlockEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -24,9 +23,7 @@ public class PortalFrameBlockEntityTeleportMixin {
     )
     private static boolean resolveSameDimTeleport(Entity entity, ServerLevel level, double x, double y, double z,
                                                    Set<?> set, float yRot, float xRot, Operation<Boolean> original) {
-        if (SubLevelContainer.getContainer(level) == null)
-            return original.call(entity, level, x, y, z, set, yRot, xRot);
-        Vec3 resolved = SableUnloadedSubLevelCompat.resolveDestination(level, new Vec3(x, y, z));
+        Vec3 resolved = TransformHelper.AccountForSublevels(level, new Vec3(x, y, z));
         return original.call(entity, level, resolved.x, resolved.y, resolved.z, set, yRot, xRot);
     }
 
@@ -37,10 +34,8 @@ public class PortalFrameBlockEntityTeleportMixin {
     )
     private static Entity resolveCrossDimTeleport(Entity entity, DimensionTransition transition,
                                                    Operation<Entity> original) {
-        if (SubLevelContainer.getContainer(entity.level()) == null)
-            return original.call(entity, transition);
-        Vec3 resolved = SableUnloadedSubLevelCompat.resolveDestination(
-                transition.newLevel(), transition.pos());
+
+        Vec3 resolved = TransformHelper.AccountForSublevels(transition.newLevel(), transition.pos());
         DimensionTransition fixed = new DimensionTransition(
                 transition.newLevel(), resolved, transition.speed(),
                 transition.yRot(), transition.xRot(),

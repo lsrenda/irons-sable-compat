@@ -5,8 +5,8 @@ import io.redspace.ironsspellbooks.capabilities.magic.MagicManager;
 import io.redspace.ironsspellbooks.particle.TraceParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
+import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,21 +33,21 @@ public class MagicManagerMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    private static void projectParticleCoordinates(Level level, ParticleOptions options, double x, double y, double z, int count, double deltaX, double deltaY, double deltaZ, double speed, boolean force, CallbackInfo ci) {
-        Vec3 originalPos = new Vec3(x, y, z);
-        Vec3 projectedPos = SableCompanion.INSTANCE.projectOutOfSubLevel(level, originalPos);
+    private static void projectParticleCoordinates(Level level, ParticleOptions particle, double x, double y, double z, int count, double deltaX, double deltaY, double deltaZ, double speed, boolean force, CallbackInfo ci) {
+        Vector3d originalPos = new Vector3d(x, y, z);
+        Vector3d projectedPos = SableCompanion.INSTANCE.projectOutOfSubLevel(level, originalPos);
         
-        if (options instanceof TraceParticleOptions traceOptions) {
+        if (particle instanceof TraceParticleOptions traceOptions) {
             if (traceOptions.destination != null) {
-                Vec3 originalDest = new Vec3(traceOptions.destination.x, traceOptions.destination.y, traceOptions.destination.z);
-                Vec3 projectedDest = SableCompanion.INSTANCE.projectOutOfSubLevel(level, originalDest);
+                Vector3d originalDest = new Vector3d(traceOptions.destination.x, traceOptions.destination.y, traceOptions.destination.z);
+                Vector3d projectedDest = SableCompanion.INSTANCE.projectOutOfSubLevel(level, originalDest);
                 traceOptions.destination.set((float) projectedDest.x, (float) projectedDest.y, (float) projectedDest.z);
             }
         }
         
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.getServer().getPlayerList().getPlayers().forEach(player -> 
-                serverLevel.sendParticles(player, options, force, projectedPos.x, projectedPos.y, projectedPos.z, count, deltaX, deltaY, deltaZ, speed)
+                serverLevel.sendParticles(player, particle, force, projectedPos.x, projectedPos.y, projectedPos.z, count, deltaX, deltaY, deltaZ, speed)
             );
         }
         ci.cancel();
